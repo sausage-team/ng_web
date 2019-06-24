@@ -9,10 +9,9 @@ export class UserService {
 
   constructor(
     private http: HttpClient
-  ) {
-  }
+  ) {}
 
-  login(data): Observable<any> {
+  login(data: any): Observable<any> {
     return this.http.post('/api/users/sign', data);
   }
 }

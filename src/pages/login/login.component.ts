@@ -1,7 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { NzMessageService } from 'ng-zorro-antd';
+
+import { login } from 'src/store/actions/user.action';
+import { UserService } from 'src/services/user.service';
+import { CookieUtil } from 'src/cache/cookie';
+
+
 
 @Component({
   selector: 'app-login',
@@ -13,9 +20,15 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
-    private router: Router) {}
+    private router: Router,
+    private store: Store<{
+      account: Map<string, any>,
+      isLogin: boolean
+    }>,
+    private message: NzMessageService,
+    private cookie: CookieUtil) {}
 
-  async submitForm(): Promise<any> {
+  submitForm(): void {
     for (const i in this.validateForm.controls) {
       this.validateForm.controls[i].markAsDirty();
       this.validateForm.controls[i].updateValueAndValidity();
@@ -25,10 +38,14 @@ export class LoginComponent implements OnInit {
         ...this.validateForm.value,
         username: this.validateForm.value.userName,
         remember: undefined
-      }).subscribe((resp: any) => {
-        console.log(resp);
-        if (resp.status === 0) {
+      }).subscribe((res: any) => {
+        if (res.status === 0) {
+          this.message.success('登录成功');
+          this.cookie.saveLoginData(res.data);
+          this.login();
           this.router.navigateByUrl('/');
+        } else {
+          this.message.success(res.msg || '登录失败');
         }
       });
     }
@@ -40,5 +57,9 @@ export class LoginComponent implements OnInit {
       password: [null, [Validators.required]],
       remember: [true]
     });
+  }
+
+  login() {
+    this.store.dispatch(login());
   }
 }
